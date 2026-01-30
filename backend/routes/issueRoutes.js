@@ -1,0 +1,42 @@
+const express = require("express");
+const router = express.Router();
+const Issue = require("../models/Issue");
+
+/* CREATE */
+router.post("/add", async (req, res) => {
+  const issue = new Issue(req.body);
+  await issue.save();
+  res.json({ message: "Issue reported successfully" });
+});
+
+/* READ */
+router.get("/", async (req, res) => {
+  const issues = await Issue.find();
+  res.json(issues);
+});
+
+/* UPDATE */
+router.put("/update/:id", async (req, res) => {
+  await Issue.findByIdAndUpdate(req.params.id, req.body);
+  res.json({ message: "Issue updated" });
+});
+
+/* DELETE */
+router.delete("/delete/:id", async (req, res) => {
+  await Issue.findByIdAndDelete(req.params.id);
+  res.json({ message: "Issue deleted" });
+});
+
+/* SEARCH */
+router.get("/search/:key", async (req, res) => {
+  const data = await Issue.find({
+    $or: [
+      { area: { $regex: req.params.key, $options: "i" } },
+      { issueType: { $regex: req.params.key, $options: "i" } },
+      { severity: { $regex: req.params.key, $options: "i" } }
+    ]
+  });
+  res.json(data);
+});
+
+module.exports = router;
