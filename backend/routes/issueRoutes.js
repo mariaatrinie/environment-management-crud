@@ -4,6 +4,7 @@ const Issue = require("../models/Issue");
 
 /* CREATE */
 router.post("/add", async (req, res) => {
+  console.log("REQ BODY:",req.body);
   const issue = new Issue(req.body);
   await issue.save();
   res.json({ message: "Issue reported successfully" });
