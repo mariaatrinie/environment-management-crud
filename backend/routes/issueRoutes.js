@@ -4,11 +4,26 @@ const Issue = require("../models/Issue");
 
 /* CREATE */
 router.post("/add", async (req, res) => {
-  console.log("REQ BODY:",req.body);
-  const issue = new Issue(req.body);
-  await issue.save();
-  res.json({ message: "Issue reported successfully" });
+  try {
+    console.log("REQ BODY:", req.body);   // 🔥 critical log
+
+    const issue = new Issue({
+      area: req.body.area,
+      issueType: req.body.issueType,
+      description: req.body.description,
+      severity: req.body.severity,
+      status: "Open"
+    });
+
+    await issue.save();
+
+    res.status(201).json({ message: "Issue saved successfully" });
+  } catch (err) {
+    console.error("SAVE ERROR:", err);
+    res.status(500).json({ error: err.message });
+  }
 });
+
 
 /* READ */
 router.get("/", async (req, res) => {
