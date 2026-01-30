@@ -11,3 +11,238 @@
       margin: 0;
       padding: 0;
     }
+
+    header {
+      background: #2e7d32;
+      color: white;
+      padding: 15px;
+      text-align: center;
+      font-size: 24px;
+    }
+
+    .container {
+      width: 90%;
+      margin: 20px auto;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+
+    h2 {
+      color: #2e7d32;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+
+    textarea {
+      resize: none;
+    }
+
+    button {
+      padding: 10px 15px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    .add-btn { background: #2e7d32; color: white; }
+    .update-btn { background: #0277bd; color: white; }
+    .edit-btn { background: #f9a825; }
+    .delete-btn { background: #c62828; color: white; }
+
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    li {
+      background: #f1f8e9;
+      margin: 10px 0;
+      padding: 15px;
+      border-radius: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .info {
+      width: 70%;
+    }
+
+    .actions button {
+      margin-left: 5px;
+    }
+  </style>
+</head>
+
+<body>
+
+<header>🌱 Environment Management System</header>
+
+<div class="container">
+
+  <h2>Report Environmental Issue</h2>
+
+  <!-- NO FORM TAG (prevents reload bug) -->
+
+  <input id="area" placeholder="Area / Location">
+
+  <select id="issueType">
+    <option value="">Select Issue Type</option>
+    <option>Air Pollution</option>
+    <option>Water Pollution</option>
+    <option>Noise Pollution</option>
+    <option>Waste Management</option>
+  </select>
+
+  <textarea id="description" placeholder="Issue Description"></textarea>
+
+  <select id="severity">
+    <option value="">Select Severity</option>
+    <option>Low</option>
+    <option>Medium</option>
+    <option>High</option>
+  </select>
+
+  <button type="button" class="add-btn" onclick="addIssue()">Add Issue</button>
+  <button type="button" class="update-btn" onclick="updateIssue()">Update Issue</button>
+
+  <h2>Search Issues</h2>
+  <input id="search" placeholder="Search by area / type / severity" onkeyup="searchIssues()">
+
+  <h2>Reported Issues</h2>
+  <ul id="list"></ul>
+
+</div>
+
+<script>
+const API = window.location.origin + "/api/issues";
+let selectedId = null;
+
+/* ADD ISSUE */
+function addIssue() {
+  fetch(API + "/add", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      area: area.value,
+      issueType: issueType.value,
+      description: description.value,
+      severity: severity.value
+    })
+  })
+  .then(res => res.json())
+  .then(() => {
+    clearForm();
+    loadIssues();
+  })
+  .catch(err => console.error(err));
+}
+
+/* LOAD ISSUES */
+function loadIssues() {
+  fetch(API)
+    .then(res => res.json())
+    .then(data => showIssues(data));
+}
+
+/* SHOW ISSUES */
+function showIssues(data) {
+  list.innerHTML = "";
+  data.forEach(i => {
+    list.innerHTML += `
+      <li>
+        <div class="info">
+          <b>Area:</b> ${i.area}<br>
+          <b>Type:</b> ${i.issueType}<br>
+          <b>Severity:</b> ${i.severity}<br>
+          <b>Status:</b> ${i.status}<br>
+          <b>Description:</b> ${i.description}
+        </div>
+        <div class="actions">
+          <button class="edit-btn" onclick="editIssue(
+            '${i._id}',
+            '${i.area}',
+            '${i.issueType}',
+            '${i.description}',
+            '${i.severity}'
+          )">Edit</button>
+          <button class="delete-btn" onclick="deleteIssue('${i._id}')">Delete</button>
+        </div>
+      </li>
+    `;
+  });
+}
+
+/* EDIT ISSUE */
+function editIssue(id, a, t, d, s) {
+  selectedId = id;
+  area.value = a;
+  issueType.value = t;
+  description.value = d;
+  severity.value = s;
+}
+
+/* UPDATE ISSUE */
+function updateIssue() {
+  if (!selectedId) {
+    alert("Please select an issue to update");
+    return;
+  }
+
+  fetch(API + "/update/" + selectedId, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      area: area.value,
+      issueType: issueType.value,
+      description: description.value,
+      severity: severity.value
+    })
+  })
+  .then(res => res.json())
+  .then(() => {
+    selectedId = null;
+    clearForm();
+    loadIssues();
+  })
+  .catch(err => console.error(err));
+}
+
+/* DELETE ISSUE */
+function deleteIssue(id) {
+  fetch(API + "/delete/" + id, { method: "DELETE" })
+    .then(() => loadIssues());
+}
+
+/* SEARCH ISSUES */
+function searchIssues() {
+  const key = search.value;
+  if (key === "") return loadIssues();
+
+  fetch(API + "/search/" + key)
+    .then(res => res.json())
+    .then(data => showIssues(data));
+}
+
+/* CLEAR FORM */
+function clearForm() {
+  area.value = "";
+  issueType.value = "";
+  description.value = "";
+  severity.value = "";
+}
+
+loadIssues();
+</script>
+
+</body>
+</html>
